@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet } from "react-router-dom";
 import Photo from "../components/Photo";
+import { useAuth } from "../context/AuthContext";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: "🏠", end: true },
@@ -17,7 +18,7 @@ const NAV = [
 ];
 
 function SidebarContent({ onNavigate }) {
-  const navigate = useNavigate();
+  const { logout } = useAuth();
   return (
     <>
       <NavLink to="/" className="flex items-center gap-2 px-5 pt-6 pb-4" onClick={onNavigate}>
@@ -59,7 +60,7 @@ function SidebarContent({ onNavigate }) {
       <button
         onClick={() => {
           onNavigate?.();
-          navigate("/");
+          logout();
         }}
         className="m-3 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition"
       >

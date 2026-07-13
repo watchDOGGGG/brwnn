@@ -43,21 +43,6 @@ export const PROGRAMMES = [
   },
 ];
 
-export const MEMBER = {
-  name: "Ugo Iwegbu",
-  plan: "Premium Sister Member",
-  memberSince: "May 2024",
-  location: "Scotland, UK",
-  bio: "Passionate about wellbeing, nature and empowering women.",
-};
-
-export const DASHBOARD_STATS = [
-  { label: "Membership Plan", value: "Premium Sister", icon: "💜" },
-  { label: "Member Since", value: "May 2024", icon: "📅" },
-  { label: "Upcoming Events", value: "3", icon: "📆" },
-  { label: "Reward Points", value: "320", icon: "🏆" },
-];
-
 export const PORTAL_EVENTS = [
   { date: "JUN 08", title: "Nature Walk & Mindful Moments", location: "Cochrane Park, Alva", time: "10:00 AM - 1:00 PM", status: "You're going", image: "/images/event-walk.jpg" },
   { date: "JUN 15", title: "Afrolatics Dance Therapy", location: "Alloa Town Hall", time: "11:00 AM - 12:30 PM", status: "Register", image: "/images/event-dance.jpg" },

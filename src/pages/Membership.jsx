@@ -1,5 +1,5 @@
+import { Link } from "react-router-dom";
 import BecomeMember from "../components/BecomeMember";
-import { LINKS } from "../config";
 
 const TIERS = [
   {
@@ -54,10 +54,8 @@ export default function Membership() {
                   </li>
                 ))}
               </ul>
-              <a
-                href={LINKS.whatsapp}
-                target="_blank"
-                rel="noreferrer"
+              <Link
+                to="/signup"
                 className={`mt-6 inline-block rounded-full font-bold text-sm px-6 py-3 transition ${
                   t.highlight
                     ? "bg-brwnn-pink text-white hover:bg-brwnn-pink/90"
@@ -65,7 +63,7 @@ export default function Membership() {
                 }`}
               >
                 Get Started
-              </a>
+              </Link>
             </div>
           ))}
         </div>

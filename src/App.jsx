@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import PublicLayout from "./layouts/PublicLayout";
 import DashboardLayout from "./layouts/DashboardLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Programmes from "./pages/Programmes";
@@ -10,6 +11,8 @@ import Shop from "./pages/Shop";
 import Resources from "./pages/Resources";
 import Community from "./pages/Community";
 import Contact from "./pages/Contact";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 
 import DashboardHome from "./pages/dashboard/DashboardHome";
 import Profile from "./pages/dashboard/Profile";
@@ -32,9 +35,18 @@ export default function App() {
         <Route path="/resources" element={<Resources />} />
         <Route path="/community" element={<Community />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
       </Route>
 
-      <Route path="/dashboard" element={<DashboardLayout />}>
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<DashboardHome />} />
         <Route path="profile" element={<Profile />} />
         <Route path="events" element={<PortalEvents />} />

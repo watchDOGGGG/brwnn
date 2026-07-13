@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import Photo from "./Photo";
+import { useAuth } from "../context/AuthContext";
 
 const LINKS_NAV = [
   { to: "/", label: "Home" },
@@ -15,6 +16,14 @@ const LINKS_NAV = [
 
 export default function NavBar() {
   const [open, setOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout();
+    setOpen(false);
+    navigate("/");
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-black/5">
@@ -46,18 +55,37 @@ export default function NavBar() {
         </nav>
 
         <div className="hidden lg:flex items-center gap-4 shrink-0">
-          <NavLink
-            to="/dashboard"
-            className="text-sm font-semibold text-ink-soft hover:text-brwnn-purple-dark transition"
-          >
-            Login
-          </NavLink>
-          <NavLink
-            to="/membership"
-            className="rounded-full bg-brwnn-pink text-white text-sm font-semibold px-5 py-2 hover:bg-brwnn-pink/90 transition"
-          >
-            Join Now
-          </NavLink>
+          {user ? (
+            <>
+              <NavLink
+                to="/dashboard"
+                className="text-sm font-semibold text-ink-soft hover:text-brwnn-purple-dark transition"
+              >
+                Hi, {user.name.split(" ")[0]}
+              </NavLink>
+              <button
+                onClick={handleLogout}
+                className="rounded-full bg-brwnn-purple-dark text-white text-sm font-semibold px-5 py-2 hover:bg-brwnn-purple transition"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <NavLink
+                to="/login"
+                className="text-sm font-semibold text-ink-soft hover:text-brwnn-purple-dark transition"
+              >
+                Login
+              </NavLink>
+              <NavLink
+                to="/signup"
+                className="rounded-full bg-brwnn-pink text-white text-sm font-semibold px-5 py-2 hover:bg-brwnn-pink/90 transition"
+              >
+                Join Now
+              </NavLink>
+            </>
+          )}
         </div>
 
         <button
@@ -84,13 +112,32 @@ export default function NavBar() {
               {l.label}
             </NavLink>
           ))}
-          <NavLink
-            to="/membership"
-            onClick={() => setOpen(false)}
-            className="rounded-full bg-brwnn-pink text-white text-center font-semibold px-4 py-2"
-          >
-            Join Now
-          </NavLink>
+          {user ? (
+            <>
+              <NavLink to="/dashboard" onClick={() => setOpen(false)} className="text-ink-soft">
+                Dashboard
+              </NavLink>
+              <button
+                onClick={handleLogout}
+                className="rounded-full bg-brwnn-purple-dark text-white text-center font-semibold px-4 py-2"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <NavLink to="/login" onClick={() => setOpen(false)} className="text-ink-soft">
+                Login
+              </NavLink>
+              <NavLink
+                to="/signup"
+                onClick={() => setOpen(false)}
+                className="rounded-full bg-brwnn-pink text-white text-center font-semibold px-4 py-2"
+              >
+                Join Now
+              </NavLink>
+            </>
+          )}
         </nav>
       )}
     </header>

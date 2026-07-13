@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { MEMBER_BENEFITS } from "../config";
 import Photo from "./Photo";
 
@@ -22,12 +23,12 @@ export default function BecomeMember() {
               </li>
             ))}
           </ul>
-          <a
-            href="/membership"
+          <Link
+            to="/signup"
             className="mt-8 inline-block rounded-full bg-brwnn-pink text-white font-bold text-sm px-6 py-3 hover:bg-brwnn-pink/90 transition"
           >
             JOIN NOW
-          </a>
+          </Link>
         </div>
 
         <div className="flex justify-center">
