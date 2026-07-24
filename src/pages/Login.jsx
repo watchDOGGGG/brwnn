@@ -8,20 +8,24 @@ export default function Login() {
   const location = useLocation();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   function handleChange(e) {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+    setSubmitting(true);
     try {
-      login(form);
+      await login(form);
       const from = location.state?.from || "/dashboard";
       navigate(from, { replace: true });
     } catch (err) {
       setError(err.message);
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -67,9 +71,10 @@ export default function Login() {
 
           <button
             type="submit"
-            className="w-full rounded-full bg-brwnn-purple-dark text-white font-bold py-3 hover:bg-brwnn-purple transition"
+            disabled={submitting}
+            className="w-full rounded-full bg-brwnn-purple-dark text-white font-bold py-3 hover:bg-brwnn-purple transition disabled:opacity-60"
           >
-            Log In
+            {submitting ? "Logging in…" : "Log In"}
           </button>
         </form>
 

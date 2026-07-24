@@ -7,20 +7,51 @@ export default function Signup() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [confirmEmailSent, setConfirmEmailSent] = useState(false);
 
   function handleChange(e) {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+    setSubmitting(true);
     try {
-      signup(form);
-      navigate("/dashboard", { replace: true });
+      const { needsEmailConfirmation } = await signup(form);
+      if (needsEmailConfirmation) {
+        setConfirmEmailSent(true);
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
     } catch (err) {
       setError(err.message);
+    } finally {
+      setSubmitting(false);
     }
+  }
+
+  if (confirmEmailSent) {
+    return (
+      <section className="min-h-[70vh] flex items-center justify-center px-5 py-16 text-center">
+        <div className="max-w-sm">
+          <h1 className="font-heading font-extrabold text-3xl text-brwnn-purple-dark">
+            Check your email 💌
+          </h1>
+          <p className="mt-3 text-ink-soft">
+            We sent a confirmation link to <strong>{form.email}</strong>.
+            Click it to activate your account, then log in.
+          </p>
+          <Link
+            to="/login"
+            className="mt-6 inline-block rounded-full bg-brwnn-purple-dark text-white font-bold px-6 py-3"
+          >
+            Go to Login
+          </Link>
+        </div>
+      </section>
+    );
   }
 
   return (
@@ -79,9 +110,10 @@ export default function Signup() {
 
           <button
             type="submit"
-            className="w-full rounded-full bg-brwnn-pink text-white font-bold py-3 hover:bg-brwnn-pink/90 transition"
+            disabled={submitting}
+            className="w-full rounded-full bg-brwnn-pink text-white font-bold py-3 hover:bg-brwnn-pink/90 transition disabled:opacity-60"
           >
-            Create Account
+            {submitting ? "Creating account…" : "Create Account"}
           </button>
         </form>
 

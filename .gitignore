@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# secrets — copy .env.example to .env and fill in real values
+.env
+.env.*
+!.env.example
+
 # raw/unoptimized source photos (processed versions live in public/images)
 assest
 

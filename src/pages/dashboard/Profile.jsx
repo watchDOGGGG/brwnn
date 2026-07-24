@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { PROGRESS, ACHIEVEMENTS } from "../../config";
 import { useAuth } from "../../context/AuthContext";
+import { uploadImage } from "../../lib/cloudinary";
 import Photo from "../../components/Photo";
 
 export default function Profile() {
@@ -10,15 +11,43 @@ export default function Profile() {
     bio: user?.bio || "",
     location: user?.location || "",
   });
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   function handleChange(e) {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   }
 
-  function handleSave(e) {
+  async function handleSave(e) {
     e.preventDefault();
-    updateProfile(form);
-    setEditing(false);
+    setSaving(true);
+    setError("");
+    try {
+      await updateProfile(form);
+      setEditing(false);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleAvatarChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError("");
+    try {
+      const url = await uploadImage(file);
+      await updateProfile({ avatar_url: url });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
   }
 
   if (!user) return null;
@@ -29,8 +58,34 @@ export default function Profile() {
         My Profile
       </h1>
 
+      {error && (
+        <p className="text-sm text-brwnn-pink bg-brwnn-pink/10 rounded-lg px-4 py-2">{error}</p>
+      )}
+
       <div className="bg-white rounded-xl p-6 shadow-sm flex flex-col sm:flex-row gap-6 items-center sm:items-start">
-        <Photo src="/images/avatar.jpg" emoji="👩🏾" className="w-24 h-24 rounded-full shrink-0" />
+        <div className="relative shrink-0">
+          <Photo
+            src={user.avatarUrl || "/images/avatar.jpg"}
+            emoji="👩🏾"
+            className="w-24 h-24 rounded-full"
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="absolute -bottom-1 -right-1 rounded-full bg-brwnn-purple-dark text-white text-xs w-8 h-8 flex items-center justify-center shadow-md disabled:opacity-60"
+            aria-label="Change photo"
+          >
+            {uploading ? "…" : "📷"}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarChange}
+            className="hidden"
+          />
+        </div>
+
         <div className="text-center sm:text-left flex-1 w-full">
           <div className="flex items-center justify-center sm:justify-between gap-2">
             <h2 className="font-bold text-lg text-brwnn-purple-dark">{user.name}</h2>
@@ -74,9 +129,10 @@ export default function Profile() {
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="rounded-full bg-brwnn-purple-dark text-white text-sm font-semibold px-4 py-1.5"
+                  disabled={saving}
+                  className="rounded-full bg-brwnn-purple-dark text-white text-sm font-semibold px-4 py-1.5 disabled:opacity-60"
                 >
-                  Save
+                  {saving ? "Saving…" : "Save"}
                 </button>
                 <button
                   type="button"
