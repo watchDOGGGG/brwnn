@@ -18,7 +18,7 @@ const SLIDES = [
   "/images/woodland-walk.jpg",
 ];
 
-const INTERVAL_MS = 5000;
+const INTERVAL_MS = 2500;
 
 function HeroCarousel() {
   const [active, setActive] = useState(0);
@@ -31,6 +31,10 @@ function HeroCarousel() {
     return () => clearInterval(id);
   }, []);
 
+  function go(delta) {
+    setActive((i) => (i + delta + SLIDES.length) % SLIDES.length);
+  }
+
   return (
     <div className="absolute inset-0 bg-gradient-to-br from-brwnn-purple-dark via-brwnn-purple to-brwnn-green">
       {SLIDES.map((src, i) =>
@@ -40,12 +44,27 @@ function HeroCarousel() {
             src={src}
             alt=""
             onError={() => setFailed((f) => ({ ...f, [i]: true }))}
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
               i === active ? "opacity-100" : "opacity-0"
             }`}
           />
         )
       )}
+
+      <button
+        onClick={() => go(-1)}
+        aria-label="Previous slide"
+        className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition"
+      >
+        ‹
+      </button>
+      <button
+        onClick={() => go(1)}
+        aria-label="Next slide"
+        className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition"
+      >
+        ›
+      </button>
 
       <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex gap-2">
         {SLIDES.map((src, i) => (
