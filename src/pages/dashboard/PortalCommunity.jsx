@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SISTERHOOD_ACTIVITY } from "../../config";
 import { useAuth } from "../../context/AuthContext";
-import { useLocalStorage } from "../../lib/useLocalStorage";
+import { fetchPosts, createPost, timeAgo } from "../../lib/dashboardData";
 
 const TABS = ["All Posts", "My Groups", "Events"];
 
@@ -9,19 +9,40 @@ export default function PortalCommunity() {
   const { user } = useAuth();
   const [tab, setTab] = useState("All Posts");
   const [draft, setDraft] = useState("");
-  const [posts, setPosts] = useLocalStorage("brwnn_posts", []);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [posting, setPosting] = useState(false);
+  const [error, setError] = useState("");
 
-  function handlePost(e) {
+  useEffect(() => {
+    fetchPosts()
+      .then(setPosts)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handlePost(e) {
     e.preventDefault();
     if (!draft.trim()) return;
-    setPosts((p) => [
-      { name: user?.name || "You", text: draft.trim(), time: "just now" },
-      ...p,
-    ]);
-    setDraft("");
+    setPosting(true);
+    setError("");
+    try {
+      const created = await createPost(user?.name || "You", draft.trim());
+      setPosts((p) => [created, ...p]);
+      setDraft("");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setPosting(false);
+    }
   }
 
-  const feed = tab === "My Groups" ? [] : [...posts, ...SISTERHOOD_ACTIVITY];
+  const realFeed = posts.map((p) => ({
+    name: p.author_name,
+    text: p.body,
+    time: timeAgo(p.created_at),
+  }));
+  const feed = tab === "My Groups" ? [] : [...realFeed, ...SISTERHOOD_ACTIVITY];
 
   return (
     <div className="space-y-6">
@@ -45,6 +66,10 @@ export default function PortalCommunity() {
         ))}
       </div>
 
+      {error && (
+        <p className="text-sm text-brwnn-pink bg-brwnn-pink/10 rounded-lg px-4 py-2">{error}</p>
+      )}
+
       <form onSubmit={handlePost} className="bg-white rounded-xl p-4 shadow-sm">
         <textarea
           value={draft}
@@ -56,24 +81,28 @@ export default function PortalCommunity() {
         <div className="flex justify-end">
           <button
             type="submit"
-            disabled={!draft.trim()}
+            disabled={!draft.trim() || posting}
             className="rounded-full bg-brwnn-pink text-white text-sm font-semibold px-4 py-1.5 disabled:opacity-40"
           >
-            Post
+            {posting ? "Posting…" : "Post"}
           </button>
         </div>
       </form>
 
       <div className="space-y-3">
-        {feed.map((a, i) => (
-          <div key={i} className="bg-white rounded-xl p-4 shadow-sm">
-            <p className="text-sm text-ink-soft">
-              <span className="font-semibold text-brwnn-purple-dark">{a.name}</span> {a.text}
-            </p>
-            <p className="text-xs text-ink-soft/70 mt-1">{a.time}</p>
-          </div>
-        ))}
-        {feed.length === 0 && (
+        {loading && (
+          <p className="text-sm text-ink-soft text-center py-6">Loading posts…</p>
+        )}
+        {!loading &&
+          feed.map((a, i) => (
+            <div key={i} className="bg-white rounded-xl p-4 shadow-sm">
+              <p className="text-sm text-ink-soft">
+                <span className="font-semibold text-brwnn-purple-dark">{a.name}</span> {a.text}
+              </p>
+              <p className="text-xs text-ink-soft/70 mt-1">{a.time}</p>
+            </div>
+          ))}
+        {!loading && feed.length === 0 && (
           <p className="text-sm text-ink-soft text-center py-6">
             No posts here yet.
           </p>

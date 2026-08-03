@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   PORTAL_EVENTS,
@@ -7,12 +8,17 @@ import {
 } from "../../config";
 import Photo from "../../components/Photo";
 import { useAuth } from "../../context/AuthContext";
-import { useLocalStorage } from "../../lib/useLocalStorage";
+import { fetchMyRsvps, fetchPosts, timeAgo } from "../../lib/dashboardData";
 
 export default function DashboardHome() {
   const { user } = useAuth();
-  const [rsvps] = useLocalStorage("brwnn_rsvps", {});
-  const [posts] = useLocalStorage("brwnn_posts", []);
+  const [rsvps, setRsvps] = useState(new Set());
+  const [posts, setPosts] = useState([]);
+
+  useEffect(() => {
+    fetchMyRsvps().then(setRsvps).catch(() => {});
+    fetchPosts(3).then(setPosts).catch(() => {});
+  }, []);
 
   const stats = [
     { label: "Membership Plan", value: user?.plan || "Community Member", icon: "💜" },
@@ -21,7 +27,12 @@ export default function DashboardHome() {
     { label: "Reward Points", value: "320", icon: "🏆" },
   ];
 
-  const activity = [...posts, ...SISTERHOOD_ACTIVITY].slice(0, 3);
+  const realActivity = posts.map((p) => ({
+    name: p.author_name,
+    text: p.body,
+    time: timeAgo(p.created_at),
+  }));
+  const activity = [...realActivity, ...SISTERHOOD_ACTIVITY].slice(0, 3);
 
   return (
     <div className="space-y-6">
@@ -54,7 +65,7 @@ export default function DashboardHome() {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {PORTAL_EVENTS.map((e) => {
-              const going = !!rsvps[e.title];
+              const going = rsvps.has(e.title);
               return (
                 <div key={e.title} className="rounded-lg overflow-hidden border border-black/5">
                   <Photo src={e.image} emoji="🌿" className="h-20" />

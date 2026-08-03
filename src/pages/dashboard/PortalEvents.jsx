@@ -1,17 +1,48 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PORTAL_EVENTS } from "../../config";
 import Photo from "../../components/Photo";
-import { useLocalStorage } from "../../lib/useLocalStorage";
+import { fetchMyRsvps, addRsvp, removeRsvp } from "../../lib/dashboardData";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const EVENT_DAYS = [8, 15, 22, 29];
 
 export default function PortalEvents() {
   const [month] = useState("June 2026");
-  const [rsvps, setRsvps] = useLocalStorage("brwnn_rsvps", {});
+  const [rsvps, setRsvps] = useState(new Set());
+  const [pending, setPending] = useState(new Set());
+  const [error, setError] = useState("");
 
-  function toggleRsvp(title) {
-    setRsvps((r) => ({ ...r, [title]: !r[title] }));
+  useEffect(() => {
+    fetchMyRsvps()
+      .then(setRsvps)
+      .catch((err) => setError(err.message));
+  }, []);
+
+  async function toggleRsvp(title) {
+    const going = rsvps.has(title);
+    setPending((p) => new Set(p).add(title));
+    setError("");
+    try {
+      if (going) {
+        await removeRsvp(title);
+        setRsvps((r) => {
+          const next = new Set(r);
+          next.delete(title);
+          return next;
+        });
+      } else {
+        await addRsvp(title);
+        setRsvps((r) => new Set(r).add(title));
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setPending((p) => {
+        const next = new Set(p);
+        next.delete(title);
+        return next;
+      });
+    }
   }
 
   return (
@@ -19,6 +50,10 @@ export default function PortalEvents() {
       <h1 className="font-heading font-extrabold text-2xl text-brwnn-purple-dark">
         Events Calendar
       </h1>
+
+      {error && (
+        <p className="text-sm text-brwnn-pink bg-brwnn-pink/10 rounded-lg px-4 py-2">{error}</p>
+      )}
 
       <div className="bg-white rounded-xl p-5 shadow-sm">
         <div className="flex items-center justify-between mb-4">
@@ -51,7 +86,8 @@ export default function PortalEvents() {
         <h2 className="font-bold text-brwnn-purple-dark mb-4">Upcoming Events</h2>
         <div className="space-y-3">
           {PORTAL_EVENTS.map((e) => {
-            const going = !!rsvps[e.title];
+            const going = rsvps.has(e.title);
+            const busy = pending.has(e.title);
             return (
               <div key={e.title} className="flex gap-3 items-center rounded-lg border border-black/5 p-3">
                 <Photo src={e.image} emoji="🌿" className="w-16 h-16 rounded-md shrink-0" />
@@ -62,7 +98,8 @@ export default function PortalEvents() {
                 </div>
                 <button
                   onClick={() => toggleRsvp(e.title)}
-                  className={`text-xs font-semibold shrink-0 rounded-full px-3 py-1.5 transition ${
+                  disabled={busy}
+                  className={`text-xs font-semibold shrink-0 rounded-full px-3 py-1.5 transition disabled:opacity-50 ${
                     going
                       ? "bg-brwnn-green/10 text-brwnn-green"
                       : "bg-brwnn-purple-dark text-white hover:bg-brwnn-purple"
