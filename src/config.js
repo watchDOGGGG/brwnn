@@ -17,7 +17,7 @@ export const PROGRAMMES = [
     image: "/images/programme-walks.jpg",
   },
   {
-    title: "Afrolatics Dance Therapy",
+    title: "Afrolitics Dance Therapy",
     text: "Move your body. Lift your spirit.",
     image: "/images/programme-dance.jpg",
   },
@@ -43,20 +43,6 @@ export const PROGRAMMES = [
   },
 ];
 
-export const PORTAL_EVENTS = [
-  { date: "JUN 08", title: "Nature Walk & Mindful Moments", location: "Cochrane Park, Alva", time: "10:00 AM - 1:00 PM", status: "You're going", image: "/images/event-walk.jpg" },
-  { date: "JUN 15", title: "Afrolatics Dance Therapy", location: "Alloa Town Hall", time: "11:00 AM - 12:30 PM", status: "Register", image: "/images/event-dance.jpg" },
-  { date: "JUN 22", title: "Wellness & Self-Care Workshop", location: "Online (Zoom)", time: "7:00 PM - 8:30 PM", status: "Register", image: "/images/programme-wellness.jpg" },
-  { date: "JUN 29", title: "Cycling Adventure", location: "Devilla Forest Trail", time: "9:00 AM - 1:00 PM", status: "Register", image: "/images/programme-cycling.jpg" },
-];
-
-export const PROGRESS = [
-  { label: "Wellbeing Streak", value: "12 days", icon: "🔥" },
-  { label: "Events Attended", value: "8", icon: "📍" },
-  { label: "Courses Completed", value: "3", icon: "🎓" },
-  { label: "Badges Earned", value: "5", icon: "🏅" },
-];
-
 export const COURSES = [
   { title: "Self-Love & Boundaries Course", progress: 60 },
   { title: "Stress Less, Thrive More Course", progress: 33 },
@@ -67,10 +53,8 @@ export const COURSES = [
 export const SISTERHOOD_ACTIVITY = [
   { name: "Ama Johnson", text: "posted in General Chat", time: "2 hours ago" },
   { name: "BRWNN Team", text: "New event photos added in Nature Walks", time: "5 hours ago" },
-  { name: "Reminder", text: "Afrolatics class tomorrow at 11AM", time: "1 day ago" },
+  { name: "Reminder", text: "Afrolitics class tomorrow at 11AM", time: "1 day ago" },
 ];
-
-export const ACHIEVEMENTS = ["🌿", "🚶🏾‍♀️", "🏆", "💜"];
 
 export const MEMBER_BENEFITS = [
   "Member-only events & retreats",
@@ -88,7 +72,7 @@ export const EVENTS = [
     image: "/images/event-walk.jpg",
   },
   {
-    title: "Afrolatics Dance Therapy",
+    title: "Afrolitics Dance Therapy",
     location: "Alloa Town Hall",
     date: "Sunday",
     time: "11:00 AM",

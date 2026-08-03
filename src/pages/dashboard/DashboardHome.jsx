@@ -1,21 +1,25 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  PORTAL_EVENTS,
-  PROGRESS,
-  COURSES,
-  SISTERHOOD_ACTIVITY,
-} from "../../config";
+import { COURSES, SISTERHOOD_ACTIVITY } from "../../config";
 import Photo from "../../components/Photo";
+import ComingSoon from "../../components/ComingSoon";
 import { useAuth } from "../../context/AuthContext";
 import { fetchMyRsvps, fetchPosts, timeAgo } from "../../lib/dashboardData";
+import { fetchEvents } from "../../lib/adminData";
+
+function formatDateLabel(dateStr) {
+  const d = new Date(`${dateStr}T00:00:00`);
+  return d.toLocaleDateString("en-GB", { month: "short", day: "numeric" }).toUpperCase();
+}
 
 export default function DashboardHome() {
   const { user } = useAuth();
+  const [events, setEvents] = useState([]);
   const [rsvps, setRsvps] = useState(new Set());
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
+    fetchEvents().then(setEvents).catch(() => {});
     fetchMyRsvps().then(setRsvps).catch(() => {});
     fetchPosts(3).then(setPosts).catch(() => {});
   }, []);
@@ -23,8 +27,8 @@ export default function DashboardHome() {
   const stats = [
     { label: "Membership Plan", value: user?.plan || "Community Member", icon: "💜" },
     { label: "Member Since", value: user?.memberSince || "—", icon: "📅" },
-    { label: "Upcoming Events", value: String(PORTAL_EVENTS.length), icon: "📆" },
-    { label: "Reward Points", value: "320", icon: "🏆" },
+    { label: "Upcoming Events", value: String(events.length), icon: "📆" },
+    { label: "Reward Points", value: String(user?.rewardPoints ?? 0), icon: "🏆" },
   ];
 
   const realActivity = posts.map((p) => ({
@@ -51,6 +55,9 @@ export default function DashboardHome() {
             <span className="text-2xl" aria-hidden>{s.icon}</span>
             <p className="mt-2 text-xs text-ink-soft">{s.label}</p>
             <p className="font-bold text-brwnn-purple-dark">{s.value}</p>
+            {s.label === "Membership Plan" && (
+              <p className="mt-1 text-[10px] text-ink-soft/70">Upgrade — coming soon</p>
+            )}
           </div>
         ))}
       </div>
@@ -64,17 +71,17 @@ export default function DashboardHome() {
             </Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {PORTAL_EVENTS.map((e) => {
-              const going = rsvps.has(e.title);
+            {events.slice(0, 4).map((e) => {
+              const going = rsvps.has(e.id);
               return (
-                <div key={e.title} className="rounded-lg overflow-hidden border border-black/5">
-                  <Photo src={e.image} emoji="🌿" className="h-20" />
+                <div key={e.id} className="rounded-lg overflow-hidden border border-black/5">
+                  <Photo src={e.image_url} emoji="🌿" className="h-20" />
                   <div className="p-2">
-                    <p className="text-[10px] font-bold text-brwnn-pink">{e.date}</p>
+                    <p className="text-[10px] font-bold text-brwnn-pink">{formatDateLabel(e.event_date)}</p>
                     <p className="text-xs font-semibold text-brwnn-purple-dark leading-tight mt-0.5">
                       {e.title}
                     </p>
-                    <p className="text-[10px] text-ink-soft mt-1">📍 {e.location}</p>
+                    <p className="text-[10px] text-ink-soft mt-1">📍 {e.location || "TBC"}</p>
                     <p
                       className={`mt-1 text-[10px] font-semibold ${
                         going ? "text-brwnn-green" : "text-brwnn-purple"
@@ -86,25 +93,15 @@ export default function DashboardHome() {
                 </div>
               );
             })}
+            {events.length === 0 && (
+              <p className="col-span-full text-sm text-ink-soft">No events scheduled yet.</p>
+            )}
           </div>
         </div>
 
         <div className="bg-white rounded-xl p-5 shadow-sm">
           <h2 className="font-bold text-brwnn-purple-dark mb-3">Your Progress</h2>
-          <div className="space-y-3">
-            {PROGRESS.map((p) => (
-              <div key={p.label} className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2 text-ink-soft">
-                  <span aria-hidden>{p.icon}</span>
-                  {p.label}
-                </span>
-                <span className="font-bold text-brwnn-purple-dark">{p.value}</span>
-              </div>
-            ))}
-          </div>
-          <Link to="/dashboard/profile" className="mt-4 inline-block text-sm text-brwnn-pink font-semibold">
-            View full progress
-          </Link>
+          <ComingSoon label="Wellbeing streak & event stats" />
         </div>
       </div>
 

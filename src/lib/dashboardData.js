@@ -11,26 +11,26 @@ async function getUserId() {
 // Event RSVPs ---------------------------------------------------------------
 
 export async function fetchMyRsvps() {
-  const { data, error } = await supabase.from("event_rsvps").select("event_title");
+  const { data, error } = await supabase.from("event_rsvps").select("event_id");
   if (error) throw new Error(error.message);
-  return new Set(data.map((r) => r.event_title));
+  return new Set(data.map((r) => r.event_id));
 }
 
-export async function addRsvp(eventTitle) {
+export async function addRsvp(eventId) {
   const userId = await getUserId();
   const { error } = await supabase
     .from("event_rsvps")
-    .insert({ user_id: userId, event_title: eventTitle });
+    .insert({ user_id: userId, event_id: eventId });
   if (error) throw new Error(error.message);
 }
 
-export async function removeRsvp(eventTitle) {
+export async function removeRsvp(eventId) {
   const userId = await getUserId();
   const { error } = await supabase
     .from("event_rsvps")
     .delete()
     .eq("user_id", userId)
-    .eq("event_title", eventTitle);
+    .eq("event_id", eventId);
   if (error) throw new Error(error.message);
 }
 

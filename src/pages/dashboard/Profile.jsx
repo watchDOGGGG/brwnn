@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
-import { PROGRESS, ACHIEVEMENTS } from "../../config";
 import { useAuth } from "../../context/AuthContext";
 import { uploadImage } from "../../lib/cloudinary";
 import Photo from "../../components/Photo";
+import ComingSoon from "../../components/ComingSoon";
 
 export default function Profile() {
   const { user, updateProfile } = useAuth();
@@ -98,8 +98,14 @@ export default function Profile() {
               </button>
             )}
           </div>
-          <p className="text-sm text-brwnn-pink font-semibold">{user.plan}</p>
+          <div className="flex items-center justify-center sm:justify-start gap-2">
+            <p className="text-sm text-brwnn-pink font-semibold">{user.plan}</p>
+            <span className="text-xs text-ink-soft">· Upgrade (coming soon)</span>
+          </div>
           <p className="text-sm text-ink-soft">{user.email}</p>
+          <p className="text-sm font-semibold text-brwnn-purple-dark mt-1">
+            🏆 {user.rewardPoints} reward points
+          </p>
 
           {editing ? (
             <form onSubmit={handleSave} className="mt-4 space-y-3 text-left">
@@ -160,26 +166,12 @@ export default function Profile() {
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="bg-white rounded-xl p-5 shadow-sm">
           <h2 className="font-bold text-brwnn-purple-dark mb-3">Progress</h2>
-          <div className="space-y-3">
-            {PROGRESS.map((p) => (
-              <div key={p.label} className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2 text-ink-soft">
-                  <span aria-hidden>{p.icon}</span>
-                  {p.label}
-                </span>
-                <span className="font-bold text-brwnn-purple-dark">{p.value}</span>
-              </div>
-            ))}
-          </div>
+          <ComingSoon label="Wellbeing streak & events attended" />
         </div>
 
         <div className="bg-white rounded-xl p-5 shadow-sm">
           <h2 className="font-bold text-brwnn-purple-dark mb-3">Achievements</h2>
-          <div className="flex gap-3 text-3xl">
-            {ACHIEVEMENTS.map((a, i) => (
-              <span key={i} aria-hidden>{a}</span>
-            ))}
-          </div>
+          <ComingSoon label="Achievements & badges" />
         </div>
       </div>
     </div>

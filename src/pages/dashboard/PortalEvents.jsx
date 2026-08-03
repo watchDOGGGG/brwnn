@@ -1,45 +1,65 @@
-import { useEffect, useState } from "react";
-import { PORTAL_EVENTS } from "../../config";
+import { useEffect, useMemo, useState } from "react";
 import Photo from "../../components/Photo";
+import { fetchEvents } from "../../lib/adminData";
 import { fetchMyRsvps, addRsvp, removeRsvp } from "../../lib/dashboardData";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const EVENT_DAYS = [8, 15, 22, 29];
+
+function formatDateLabel(dateStr) {
+  const d = new Date(`${dateStr}T00:00:00`);
+  return d.toLocaleDateString("en-GB", { month: "short", day: "numeric" }).toUpperCase();
+}
 
 export default function PortalEvents() {
-  const [month] = useState("June 2026");
+  const [events, setEvents] = useState([]);
   const [rsvps, setRsvps] = useState(new Set());
   const [pending, setPending] = useState(new Set());
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchMyRsvps()
-      .then(setRsvps)
-      .catch((err) => setError(err.message));
+    Promise.all([fetchEvents(), fetchMyRsvps()])
+      .then(([evts, myRsvps]) => {
+        setEvents(evts);
+        setRsvps(myRsvps);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
   }, []);
 
-  async function toggleRsvp(title) {
-    const going = rsvps.has(title);
-    setPending((p) => new Set(p).add(title));
+  const eventDays = useMemo(
+    () => new Set(events.map((e) => new Date(`${e.event_date}T00:00:00`).getDate())),
+    [events]
+  );
+  const calendarMonth = events[0]
+    ? new Date(`${events[0].event_date}T00:00:00`).toLocaleDateString("en-GB", {
+        month: "long",
+        year: "numeric",
+      })
+    : new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+
+  async function toggleRsvp(id) {
+    const going = rsvps.has(id);
+    setPending((p) => new Set(p).add(id));
     setError("");
     try {
       if (going) {
-        await removeRsvp(title);
+        await removeRsvp(id);
         setRsvps((r) => {
           const next = new Set(r);
-          next.delete(title);
+          next.delete(id);
           return next;
         });
       } else {
-        await addRsvp(title);
-        setRsvps((r) => new Set(r).add(title));
+        await addRsvp(id);
+        setRsvps((r) => new Set(r).add(id));
       }
     } catch (err) {
       setError(err.message);
     } finally {
       setPending((p) => {
         const next = new Set(p);
-        next.delete(title);
+        next.delete(id);
         return next;
       });
     }
@@ -58,7 +78,7 @@ export default function PortalEvents() {
       <div className="bg-white rounded-xl p-5 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <button className="text-ink-soft" aria-label="Previous month">‹</button>
-          <p className="font-bold text-brwnn-purple-dark">{month}</p>
+          <p className="font-bold text-brwnn-purple-dark">{calendarMonth}</p>
           <button className="text-ink-soft" aria-label="Next month">›</button>
         </div>
         <div className="grid grid-cols-7 gap-1 text-center text-xs text-ink-soft mb-2">
@@ -71,7 +91,7 @@ export default function PortalEvents() {
             <div
               key={day}
               className={`aspect-square rounded-md flex items-center justify-center text-xs ${
-                EVENT_DAYS.includes(day)
+                eventDays.has(day)
                   ? "bg-brwnn-pink text-white font-bold"
                   : "text-ink-soft hover:bg-paper"
               }`}
@@ -84,20 +104,26 @@ export default function PortalEvents() {
 
       <div className="bg-white rounded-xl p-5 shadow-sm">
         <h2 className="font-bold text-brwnn-purple-dark mb-4">Upcoming Events</h2>
+        {loading && <p className="text-sm text-ink-soft">Loading events…</p>}
         <div className="space-y-3">
-          {PORTAL_EVENTS.map((e) => {
-            const going = rsvps.has(e.title);
-            const busy = pending.has(e.title);
+          {!loading && events.length === 0 && (
+            <p className="text-sm text-ink-soft">No events scheduled yet — check back soon.</p>
+          )}
+          {events.map((e) => {
+            const going = rsvps.has(e.id);
+            const busy = pending.has(e.id);
             return (
-              <div key={e.title} className="flex gap-3 items-center rounded-lg border border-black/5 p-3">
-                <Photo src={e.image} emoji="🌿" className="w-16 h-16 rounded-md shrink-0" />
+              <div key={e.id} className="flex gap-3 items-center rounded-lg border border-black/5 p-3">
+                <Photo src={e.image_url} emoji="🌿" className="w-16 h-16 rounded-md shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-brwnn-pink">{e.date}</p>
+                  <p className="text-xs font-bold text-brwnn-pink">{formatDateLabel(e.event_date)}</p>
                   <p className="font-semibold text-brwnn-purple-dark text-sm">{e.title}</p>
-                  <p className="text-xs text-ink-soft">📍 {e.location} · ⏰ {e.time}</p>
+                  <p className="text-xs text-ink-soft">
+                    📍 {e.location || "TBC"} {e.event_time && `· ⏰ ${e.event_time}`}
+                  </p>
                 </div>
                 <button
-                  onClick={() => toggleRsvp(e.title)}
+                  onClick={() => toggleRsvp(e.id)}
                   disabled={busy}
                   className={`text-xs font-semibold shrink-0 rounded-full px-3 py-1.5 transition disabled:opacity-50 ${
                     going

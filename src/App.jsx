@@ -1,7 +1,9 @@
 import { Routes, Route } from "react-router-dom";
 import PublicLayout from "./layouts/PublicLayout";
 import DashboardLayout from "./layouts/DashboardLayout";
+import AdminLayout from "./layouts/AdminLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Programmes from "./pages/Programmes";
@@ -21,6 +23,10 @@ import PortalProgrammes from "./pages/dashboard/PortalProgrammes";
 import CoursesResources from "./pages/dashboard/CoursesResources";
 import PortalCommunity from "./pages/dashboard/PortalCommunity";
 import Settings from "./pages/dashboard/Settings";
+
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminEvents from "./pages/admin/AdminEvents";
+import AdminLogin from "./pages/admin/AdminLogin";
 
 export default function App() {
   return (
@@ -58,6 +64,20 @@ export default function App() {
         <Route path="messages" element={<Settings title="Messages" />} />
         <Route path="announcements" element={<Settings title="Announcements" />} />
         <Route path="settings" element={<Settings title="Settings" />} />
+      </Route>
+
+      <Route path="/myadmin/login" element={<AdminLogin />} />
+
+      <Route
+        path="/myadmin"
+        element={
+          <AdminRoute>
+            <AdminLayout />
+          </AdminRoute>
+        }
+      >
+        <Route index element={<AdminUsers />} />
+        <Route path="events" element={<AdminEvents />} />
       </Route>
     </Routes>
   );

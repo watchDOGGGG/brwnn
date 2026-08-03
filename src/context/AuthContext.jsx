@@ -1,8 +1,21 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
-import { mapSupabaseUser } from "../lib/mapUser";
+import { mapSupabaseUser, mergeProfile } from "../lib/mapUser";
+import { fetchMyProfile } from "../lib/adminData";
 
 const AuthContext = createContext(null);
+
+async function withProfile(baseUser) {
+  if (!baseUser) return null;
+  try {
+    const profile = await fetchMyProfile(baseUser.id);
+    return mergeProfile(baseUser, profile);
+  } catch {
+    // Profile row may not exist yet (e.g. trigger hasn't run) — fall back
+    // to the base auth-derived user rather than blocking login.
+    return baseUser;
+  }
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -14,13 +27,13 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(mapSupabaseUser(data.session?.user));
+    supabase.auth.getSession().then(async ({ data }) => {
+      setUser(await withProfile(mapSupabaseUser(data.session?.user)));
       setLoading(false);
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(mapSupabaseUser(session?.user));
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setUser(await withProfile(mapSupabaseUser(session?.user)));
     });
 
     return () => listener.subscription.unsubscribe();
@@ -47,16 +60,18 @@ export function AuthProvider({ children }) {
       // Email confirmation is required before a session exists.
       return { user: null, needsEmailConfirmation: true };
     }
-    setUser(mapSupabaseUser(data.user));
-    return { user: mapSupabaseUser(data.user), needsEmailConfirmation: false };
+    const mapped = await withProfile(mapSupabaseUser(data.user));
+    setUser(mapped);
+    return { user: mapped, needsEmailConfirmation: false };
   }
 
   async function login({ email, password }) {
     assertConfigured();
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
-    setUser(mapSupabaseUser(data.user));
-    return mapSupabaseUser(data.user);
+    const mapped = await withProfile(mapSupabaseUser(data.user));
+    setUser(mapped);
+    return mapped;
   }
 
   async function logout() {
@@ -69,7 +84,7 @@ export function AuthProvider({ children }) {
     assertConfigured();
     const { data, error } = await supabase.auth.updateUser({ data: patch });
     if (error) throw new Error(error.message);
-    const mapped = mapSupabaseUser(data.user);
+    const mapped = await withProfile(mapSupabaseUser(data.user));
     setUser(mapped);
     return mapped;
   }

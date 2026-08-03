@@ -9,6 +9,11 @@ export default function Welcome() {
   return (
     <section className="px-5 py-16 sm:py-24 max-w-6xl mx-auto grid sm:grid-cols-2 gap-10 items-center">
       <div>
+        <Photo
+          src="/images/logo.png"
+          emoji="🌿"
+          className="w-16 h-16 rounded-full mb-5 shadow-md"
+        />
         <h2 className="font-heading font-extrabold text-3xl sm:text-4xl text-brwnn-purple-dark">
           Welcome to BRWNN 🌿
         </h2>
