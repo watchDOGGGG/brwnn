@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Photo({ src, alt = "", emoji = "🌿", className = "" }) {
   const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
 
   return (
     <div
@@ -9,6 +13,7 @@ export default function Photo({ src, alt = "", emoji = "🌿", className = "" })
     >
       {!failed && (
         <img
+          key={src}
           src={src}
           alt={alt}
           onError={() => setFailed(true)}
