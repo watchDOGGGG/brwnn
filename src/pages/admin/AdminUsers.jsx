@@ -1,15 +1,32 @@
 import { useEffect, useState } from "react";
-import { fetchAllProfiles, updateProfileAsAdmin } from "../../lib/adminData";
+import { fetchAllProfiles, fetchAllRsvps, updateProfileAsAdmin } from "../../lib/adminData";
 
 const PLANS = ["Community Member", "Premium Sister"];
 
-function EditableRow({ profile, onSaved }) {
+function isBirthdaySoon(birthday) {
+  if (!birthday) return false;
+  const today = new Date();
+  const bday = new Date(`${birthday}T00:00:00`);
+  bday.setFullYear(today.getFullYear());
+  if (bday < new Date(today.toDateString())) bday.setFullYear(today.getFullYear() + 1);
+  const days = Math.round((bday - new Date(today.toDateString())) / 86400000);
+  return days >= 0 && days <= 7;
+}
+
+function formatBirthday(birthday) {
+  if (!birthday) return "—";
+  return new Date(`${birthday}T00:00:00`).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+  });
+}
+
+function EditableRow({ profile, eventsAttended, onSaved }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     plan: profile.plan,
     reward_points: profile.reward_points,
     wellbeing_streak: profile.wellbeing_streak,
-    events_attended: profile.events_attended,
     courses_completed: profile.courses_completed,
     is_admin: profile.is_admin,
   });
@@ -38,15 +55,19 @@ function EditableRow({ profile, onSaved }) {
   if (!editing) {
     return (
       <tr className="border-b border-black/5">
-        <td className="py-3 pr-4">
+        <td className="py-3 pr-4 pl-4">
           <p className="font-semibold text-brwnn-purple-dark">{profile.name || "—"}</p>
           <p className="text-xs text-ink-soft">{profile.email}</p>
         </td>
         <td className="py-3 pr-4">{profile.plan}</td>
         <td className="py-3 pr-4 text-center">{profile.reward_points}</td>
         <td className="py-3 pr-4 text-center">{profile.wellbeing_streak}</td>
-        <td className="py-3 pr-4 text-center">{profile.events_attended}</td>
+        <td className="py-3 pr-4 text-center">{eventsAttended}</td>
         <td className="py-3 pr-4 text-center">{profile.courses_completed}</td>
+        <td className="py-3 pr-4 text-center">
+          {formatBirthday(profile.birthday)}
+          {isBirthdaySoon(profile.birthday) && <span className="ml-1" title="Birthday within 7 days">🎂</span>}
+        </td>
         <td className="py-3 pr-4 text-center">{profile.is_admin ? "✓" : ""}</td>
         <td className="py-3">
           <button onClick={() => setEditing(true)} className="text-sm font-semibold text-brwnn-pink">
@@ -59,7 +80,7 @@ function EditableRow({ profile, onSaved }) {
 
   return (
     <tr className="border-b border-black/5 bg-brwnn-sand/40">
-      <td className="py-3 pr-4">
+      <td className="py-3 pr-4 pl-4">
         <p className="font-semibold text-brwnn-purple-dark">{profile.name || "—"}</p>
         <p className="text-xs text-ink-soft">{profile.email}</p>
       </td>
@@ -76,12 +97,13 @@ function EditableRow({ profile, onSaved }) {
       <td className="py-3 pr-4">
         <input type="number" name="wellbeing_streak" value={form.wellbeing_streak} onChange={handleChange} className="w-16 rounded border border-black/10 px-2 py-1 text-sm text-center" />
       </td>
-      <td className="py-3 pr-4">
-        <input type="number" name="events_attended" value={form.events_attended} onChange={handleChange} className="w-16 rounded border border-black/10 px-2 py-1 text-sm text-center" />
+      <td className="py-3 pr-4 text-center text-ink-soft" title="Computed from ticked attendance on the Events page">
+        {eventsAttended}
       </td>
       <td className="py-3 pr-4">
         <input type="number" name="courses_completed" value={form.courses_completed} onChange={handleChange} className="w-16 rounded border border-black/10 px-2 py-1 text-sm text-center" />
       </td>
+      <td className="py-3 pr-4 text-center text-ink-soft">{formatBirthday(profile.birthday)}</td>
       <td className="py-3 pr-4 text-center">
         <input type="checkbox" name="is_admin" checked={form.is_admin} onChange={handleChange} />
       </td>
@@ -106,12 +128,20 @@ function EditableRow({ profile, onSaved }) {
 
 export default function AdminUsers() {
   const [profiles, setProfiles] = useState([]);
+  const [attendanceCounts, setAttendanceCounts] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchAllProfiles()
-      .then(setProfiles)
+    Promise.all([fetchAllProfiles(), fetchAllRsvps()])
+      .then(([profileRows, rsvps]) => {
+        setProfiles(profileRows);
+        const counts = {};
+        for (const r of rsvps) {
+          if (r.attended) counts[r.user_id] = (counts[r.user_id] || 0) + 1;
+        }
+        setAttendanceCounts(counts);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
@@ -119,6 +149,8 @@ export default function AdminUsers() {
   function handleSaved(updated) {
     setProfiles((ps) => ps.map((p) => (p.id === updated.id ? updated : p)));
   }
+
+  const upcomingBirthdays = profiles.filter((p) => isBirthdaySoon(p.birthday));
 
   return (
     <div>
@@ -128,6 +160,13 @@ export default function AdminUsers() {
 
       {error && (
         <p className="text-sm text-brwnn-pink bg-brwnn-pink/10 rounded-lg px-4 py-2 mb-4">{error}</p>
+      )}
+
+      {!loading && upcomingBirthdays.length > 0 && (
+        <div className="bg-brwnn-pink/10 text-brwnn-pink rounded-lg px-4 py-2 mb-4 text-sm">
+          🎂 Upcoming birthdays (next 7 days):{" "}
+          {upcomingBirthdays.map((p) => `${p.name || p.email} (${formatBirthday(p.birthday)})`).join(", ")}
+        </div>
       )}
 
       {loading ? (
@@ -143,13 +182,19 @@ export default function AdminUsers() {
                 <th className="py-3 pr-4">Streak</th>
                 <th className="py-3 pr-4">Events</th>
                 <th className="py-3 pr-4">Courses</th>
+                <th className="py-3 pr-4">Birthday</th>
                 <th className="py-3 pr-4">Admin</th>
                 <th className="py-3"></th>
               </tr>
             </thead>
             <tbody>
               {profiles.map((p) => (
-                <EditableRow key={p.id} profile={p} onSaved={handleSaved} />
+                <EditableRow
+                  key={p.id}
+                  profile={p}
+                  eventsAttended={attendanceCounts[p.id] || 0}
+                  onSaved={handleSaved}
+                />
               ))}
             </tbody>
           </table>

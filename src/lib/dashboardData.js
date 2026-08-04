@@ -83,6 +83,13 @@ export async function createPost(authorName, body) {
   return data;
 }
 
+// Profile self-service ---------------------------------------------------
+
+export async function updateMyBirthday(birthday) {
+  const { error } = await supabase.rpc("update_my_birthday", { new_birthday: birthday });
+  if (error) throw new Error(error.message);
+}
+
 // Helpers ---------------------------------------------------------------
 
 export function timeAgo(isoString) {

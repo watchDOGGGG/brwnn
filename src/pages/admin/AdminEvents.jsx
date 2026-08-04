@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { fetchEvents, createEvent, updateEvent, deleteEvent } from "../../lib/adminData";
 import { uploadImage } from "../../lib/cloudinary";
 import Photo from "../../components/Photo";
+import AttendeesPanel from "./AttendeesPanel";
 
 const EMPTY_FORM = {
   title: "",
@@ -20,6 +21,7 @@ export default function AdminEvents() {
   const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => {
     load();
@@ -190,22 +192,31 @@ export default function AdminEvents() {
         ) : (
           <div className="space-y-3">
             {events.map((ev) => (
-              <div key={ev.id} className="bg-white rounded-xl p-4 shadow-sm flex gap-4 items-center">
-                <Photo src={ev.image_url} emoji="🌿" className="w-20 h-20 rounded-lg shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-brwnn-purple-dark">{ev.title}</p>
-                  <p className="text-xs text-ink-soft">
-                    📅 {ev.event_date} · ⏰ {ev.event_time || "—"} · 📍 {ev.location || "—"}
-                  </p>
+              <div key={ev.id} className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div className="p-4 flex gap-4 items-center">
+                  <Photo src={ev.image_url} emoji="🌿" className="w-20 h-20 rounded-lg shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-brwnn-purple-dark">{ev.title}</p>
+                    <p className="text-xs text-ink-soft">
+                      📅 {ev.event_date} · ⏰ {ev.event_time || "—"} · 📍 {ev.location || "—"}
+                    </p>
+                  </div>
+                  <div className="flex gap-3 shrink-0">
+                    <button
+                      onClick={() => setExpandedId(expandedId === ev.id ? null : ev.id)}
+                      className="text-sm font-semibold text-brwnn-purple-dark"
+                    >
+                      {expandedId === ev.id ? "Hide" : "Attendees"}
+                    </button>
+                    <button onClick={() => startEdit(ev)} className="text-sm font-semibold text-brwnn-pink">
+                      Edit
+                    </button>
+                    <button onClick={() => handleDelete(ev.id)} className="text-sm font-semibold text-ink-soft">
+                      Delete
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-3 shrink-0">
-                  <button onClick={() => startEdit(ev)} className="text-sm font-semibold text-brwnn-pink">
-                    Edit
-                  </button>
-                  <button onClick={() => handleDelete(ev.id)} className="text-sm font-semibold text-ink-soft">
-                    Delete
-                  </button>
-                </div>
+                {expandedId === ev.id && <AttendeesPanel eventId={ev.id} />}
               </div>
             ))}
             {events.length === 0 && (

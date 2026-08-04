@@ -20,6 +20,7 @@ export function mapSupabaseUser(u) {
     wellbeingStreak: 0,
     eventsAttended: 0,
     coursesCompleted: 0,
+    birthday: "",
   };
 }
 
@@ -34,5 +35,6 @@ export function mergeProfile(user, profile) {
     wellbeingStreak: profile.wellbeing_streak ?? 0,
     eventsAttended: profile.events_attended ?? 0,
     coursesCompleted: profile.courses_completed ?? 0,
+    birthday: profile.birthday || "",
   };
 }

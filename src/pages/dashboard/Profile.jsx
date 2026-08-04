@@ -1,15 +1,17 @@
 import { useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { uploadImage } from "../../lib/cloudinary";
+import { updateMyBirthday } from "../../lib/dashboardData";
 import Photo from "../../components/Photo";
 import ComingSoon from "../../components/ComingSoon";
 
 export default function Profile() {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, refreshProfile } = useAuth();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     bio: user?.bio || "",
     location: user?.location || "",
+    birthday: user?.birthday || "",
   });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -25,7 +27,11 @@ export default function Profile() {
     setSaving(true);
     setError("");
     try {
-      await updateProfile(form);
+      await updateProfile({ bio: form.bio, location: form.location });
+      if (form.birthday !== user.birthday) {
+        await updateMyBirthday(form.birthday || null);
+        await refreshProfile();
+      }
       setEditing(false);
     } catch (err) {
       setError(err.message);
@@ -132,6 +138,21 @@ export default function Profile() {
                   className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-brwnn-purple"
                 />
               </div>
+              <div>
+                <label className="block text-xs font-semibold text-brwnn-purple-dark mb-1">
+                  Birthday
+                </label>
+                <input
+                  type="date"
+                  name="birthday"
+                  value={form.birthday}
+                  onChange={handleChange}
+                  className="w-full rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-brwnn-purple"
+                />
+                <p className="text-[11px] text-ink-soft mt-1">
+                  We'll send you a little something on your birthday 🎂
+                </p>
+              </div>
               <div className="flex gap-2">
                 <button
                   type="submit"
@@ -157,6 +178,15 @@ export default function Profile() {
               <div className="mt-3 text-sm text-ink-soft space-y-1">
                 <p>Member Since: {user.memberSince}</p>
                 <p>Location: {user.location || "Not set"}</p>
+                <p>
+                  Birthday:{" "}
+                  {user.birthday
+                    ? new Date(`${user.birthday}T00:00:00`).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "long",
+                      })
+                    : "Not set"}
+                </p>
               </div>
             </>
           )}

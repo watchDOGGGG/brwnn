@@ -89,9 +89,17 @@ export function AuthProvider({ children }) {
     return mapped;
   }
 
+  async function refreshProfile() {
+    assertConfigured();
+    const { data } = await supabase.auth.getUser();
+    const mapped = await withProfile(mapSupabaseUser(data.user));
+    setUser(mapped);
+    return mapped;
+  }
+
   return (
     <AuthContext.Provider
-      value={{ user, loading, signup, login, logout, updateProfile, isSupabaseConfigured }}
+      value={{ user, loading, signup, login, logout, updateProfile, refreshProfile, isSupabaseConfigured }}
     >
       {children}
     </AuthContext.Provider>

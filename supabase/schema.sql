@@ -22,6 +22,7 @@ create table public.profiles (
   wellbeing_streak integer not null default 0,
   events_attended integer not null default 0,
   courses_completed integer not null default 0,
+  birthday date,
   created_at timestamptz not null default now()
 );
 
@@ -43,6 +44,21 @@ create policy "profiles_select_own_or_admin" on public.profiles
 
 create policy "profiles_update_admin_only" on public.profiles
   for update using (public.is_admin(auth.uid()));
+
+-- Narrow, security-definer path so users can set their OWN birthday
+-- without a general self-update policy that would also expose
+-- reward_points/is_admin/etc to tampering.
+create or replace function public.update_my_birthday(new_birthday date)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  update public.profiles set birthday = new_birthday where id = auth.uid();
+end;
+$$;
+
+grant execute on function public.update_my_birthday(date) to authenticated;
 
 -- Auto-create a profile row whenever someone signs up, and keep
 -- name/email in sync if they change their auth metadata later.
@@ -108,6 +124,7 @@ create table public.event_rsvps (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   event_id uuid not null references public.events(id) on delete cascade,
+  attended boolean not null default false,
   created_at timestamptz not null default now(),
   unique (user_id, event_id)
 );
@@ -122,6 +139,12 @@ create policy "rsvps_insert_own" on public.event_rsvps
 
 create policy "rsvps_delete_own" on public.event_rsvps
   for delete using (auth.uid() = user_id);
+
+create policy "rsvps_admin_select_all" on public.event_rsvps
+  for select using (public.is_admin(auth.uid()));
+
+create policy "rsvps_admin_update_attended" on public.event_rsvps
+  for update using (public.is_admin(auth.uid())) with check (public.is_admin(auth.uid()));
 
 -- ---------------------------------------------------------------------
 -- Programme bookings (unchanged — programmes are still static content).
