@@ -60,6 +60,27 @@ $$;
 
 grant execute on function public.update_my_birthday(date) to authenticated;
 
+-- Admin-only member deletion. Deleting an auth user normally requires the
+-- service_role key (never put that in frontend code) — this runs as the
+-- function owner instead, but checks the CALLER is an admin first.
+create or replace function public.delete_member(target_id uuid)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  if not public.is_admin(auth.uid()) then
+    raise exception 'Only admins can delete members.';
+  end if;
+  if target_id = auth.uid() then
+    raise exception 'You cannot delete your own admin account.';
+  end if;
+  delete from auth.users where id = target_id;
+end;
+$$;
+
+grant execute on function public.delete_member(uuid) to authenticated;
+
 -- Auto-create a profile row whenever someone signs up, and keep
 -- name/email in sync if they change their auth metadata later.
 create or replace function public.handle_new_user()

@@ -32,6 +32,11 @@ export async function updateProfileAsAdmin(userId, patch) {
   return data;
 }
 
+export async function deleteMember(userId) {
+  const { error } = await supabase.rpc("delete_member", { target_id: userId });
+  if (error) throw new Error(error.message);
+}
+
 // Events (admin-managed) --------------------------------------------------
 
 export async function fetchEvents() {

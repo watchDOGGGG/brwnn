@@ -27,6 +27,7 @@ import Settings from "./pages/dashboard/Settings";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminEvents from "./pages/admin/AdminEvents";
 import AdminLogin from "./pages/admin/AdminLogin";
+import AdminStats from "./pages/admin/AdminStats";
 
 export default function App() {
   return (
@@ -78,6 +79,7 @@ export default function App() {
       >
         <Route index element={<AdminUsers />} />
         <Route path="events" element={<AdminEvents />} />
+        <Route path="stats" element={<AdminStats />} />
       </Route>
     </Routes>
   );

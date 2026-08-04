@@ -25,6 +25,12 @@ export default function AdminLayout() {
               >
                 Events
               </NavLink>
+              <NavLink
+                to="/myadmin/stats"
+                className={({ isActive }) => (isActive ? "text-white" : "text-white/60 hover:text-white")}
+              >
+                Statistics
+              </NavLink>
             </nav>
           </div>
           <div className="flex items-center gap-4 text-sm">

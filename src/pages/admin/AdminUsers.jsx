@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { fetchAllProfiles, fetchAllRsvps, updateProfileAsAdmin } from "../../lib/adminData";
+import { Link } from "react-router-dom";
+import { fetchAllProfiles, fetchAllRsvps, updateProfileAsAdmin, deleteMember } from "../../lib/adminData";
 
 const PLANS = ["Community Member", "Premium Sister"];
 
@@ -21,7 +22,7 @@ function formatBirthday(birthday) {
   });
 }
 
-function EditableRow({ profile, eventsAttended, onSaved }) {
+function EditableRow({ profile, eventsAttended, selected, onToggleSelect, onSaved, onDeleted }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     plan: profile.plan,
@@ -31,6 +32,7 @@ function EditableRow({ profile, eventsAttended, onSaved }) {
     is_admin: profile.is_admin,
   });
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
 
   function handleChange(e) {
@@ -52,10 +54,34 @@ function EditableRow({ profile, eventsAttended, onSaved }) {
     }
   }
 
+  async function handleDelete() {
+    if (!window.confirm(`Delete ${profile.name || profile.email}? This can't be undone.`)) return;
+    setDeleting(true);
+    setError("");
+    try {
+      await deleteMember(profile.id);
+      onDeleted(profile.id);
+    } catch (err) {
+      setError(err.message);
+      setDeleting(false);
+    }
+  }
+
+  const checkbox = (
+    <input
+      type="checkbox"
+      checked={selected}
+      onChange={() => onToggleSelect(profile.id)}
+      disabled={profile.is_admin}
+      title={profile.is_admin ? "Admin accounts can't be bulk-selected" : undefined}
+    />
+  );
+
   if (!editing) {
     return (
       <tr className="border-b border-black/5">
-        <td className="py-3 pr-4 pl-4">
+        <td className="py-3 pl-4 pr-2">{checkbox}</td>
+        <td className="py-3 pr-4">
           <p className="font-semibold text-brwnn-purple-dark">{profile.name || "—"}</p>
           <p className="text-xs text-ink-soft">{profile.email}</p>
         </td>
@@ -70,9 +96,21 @@ function EditableRow({ profile, eventsAttended, onSaved }) {
         </td>
         <td className="py-3 pr-4 text-center">{profile.is_admin ? "✓" : ""}</td>
         <td className="py-3">
-          <button onClick={() => setEditing(true)} className="text-sm font-semibold text-brwnn-pink">
-            Edit
-          </button>
+          <div className="flex gap-2 items-center">
+            <button onClick={() => setEditing(true)} className="text-sm font-semibold text-brwnn-pink">
+              Edit
+            </button>
+            {!profile.is_admin && (
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="text-sm font-semibold text-ink-soft hover:text-brwnn-pink disabled:opacity-50"
+              >
+                {deleting ? "…" : "Delete"}
+              </button>
+            )}
+          </div>
+          {error && <p className="text-xs text-brwnn-pink mt-1">{error}</p>}
         </td>
       </tr>
     );
@@ -80,7 +118,8 @@ function EditableRow({ profile, eventsAttended, onSaved }) {
 
   return (
     <tr className="border-b border-black/5 bg-brwnn-sand/40">
-      <td className="py-3 pr-4 pl-4">
+      <td className="py-3 pl-4 pr-2">{checkbox}</td>
+      <td className="py-3 pr-4">
         <p className="font-semibold text-brwnn-purple-dark">{profile.name || "—"}</p>
         <p className="text-xs text-ink-soft">{profile.email}</p>
       </td>
@@ -131,8 +170,15 @@ export default function AdminUsers() {
   const [attendanceCounts, setAttendanceCounts] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selected, setSelected] = useState(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   useEffect(() => {
+    load();
+  }, []);
+
+  function load() {
+    setLoading(true);
     Promise.all([fetchAllProfiles(), fetchAllRsvps()])
       .then(([profileRows, rsvps]) => {
         setProfiles(profileRows);
@@ -144,19 +190,65 @@ export default function AdminUsers() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, []);
+  }
 
   function handleSaved(updated) {
     setProfiles((ps) => ps.map((p) => (p.id === updated.id ? updated : p)));
+  }
+
+  function handleDeleted(id) {
+    setProfiles((ps) => ps.filter((p) => p.id !== id));
+    setSelected((s) => {
+      const next = new Set(s);
+      next.delete(id);
+      return next;
+    });
+  }
+
+  function toggleSelect(id) {
+    setSelected((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const selectableIds = profiles.filter((p) => !p.is_admin).map((p) => p.id);
+  const allSelected = selectableIds.length > 0 && selectableIds.every((id) => selected.has(id));
+
+  function toggleSelectAll() {
+    setSelected(allSelected ? new Set() : new Set(selectableIds));
+  }
+
+  async function handleBulkDelete() {
+    if (selected.size === 0) return;
+    if (!window.confirm(`Delete ${selected.size} selected member${selected.size === 1 ? "" : "s"}? This can't be undone.`)) return;
+    setBulkDeleting(true);
+    setError("");
+    const ids = [...selected];
+    const results = await Promise.allSettled(ids.map((id) => deleteMember(id)));
+    const failed = results
+      .map((r, i) => (r.status === "rejected" ? ids[i] : null))
+      .filter(Boolean);
+    setProfiles((ps) => ps.filter((p) => !ids.includes(p.id) || failed.includes(p.id)));
+    setSelected(new Set());
+    if (failed.length) setError(`${failed.length} deletion(s) failed.`);
+    setBulkDeleting(false);
   }
 
   const upcomingBirthdays = profiles.filter((p) => isBirthdaySoon(p.birthday));
 
   return (
     <div>
-      <h1 className="font-heading font-extrabold text-2xl text-brwnn-purple-dark mb-6">
-        Users ({profiles.length})
-      </h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="font-heading font-extrabold text-2xl text-brwnn-purple-dark">
+          Users ({profiles.length})
+        </h1>
+        <Link to="/myadmin/stats" className="text-sm font-semibold text-brwnn-pink">
+          View Statistics →
+        </Link>
+      </div>
 
       {error && (
         <p className="text-sm text-brwnn-pink bg-brwnn-pink/10 rounded-lg px-4 py-2 mb-4">{error}</p>
@@ -169,6 +261,19 @@ export default function AdminUsers() {
         </div>
       )}
 
+      {selected.size > 0 && (
+        <div className="flex items-center gap-3 bg-white rounded-lg shadow-sm px-4 py-2.5 mb-4">
+          <span className="text-sm text-ink-soft">{selected.size} selected</span>
+          <button
+            onClick={handleBulkDelete}
+            disabled={bulkDeleting}
+            className="text-sm font-semibold text-white bg-brwnn-pink rounded-full px-4 py-1.5 disabled:opacity-50"
+          >
+            {bulkDeleting ? "Deleting…" : "Delete Selected"}
+          </button>
+        </div>
+      )}
+
       {loading ? (
         <p className="text-ink-soft">Loading…</p>
       ) : (
@@ -176,7 +281,10 @@ export default function AdminUsers() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-black/10 text-left text-xs uppercase tracking-wide text-ink-soft">
-                <th className="py-3 pr-4 pl-4">Member</th>
+                <th className="py-3 pl-4 pr-2">
+                  <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} />
+                </th>
+                <th className="py-3 pr-4">Member</th>
                 <th className="py-3 pr-4">Plan</th>
                 <th className="py-3 pr-4">Points</th>
                 <th className="py-3 pr-4">Streak</th>
@@ -193,7 +301,10 @@ export default function AdminUsers() {
                   key={p.id}
                   profile={p}
                   eventsAttended={attendanceCounts[p.id] || 0}
+                  selected={selected.has(p.id)}
+                  onToggleSelect={toggleSelect}
                   onSaved={handleSaved}
+                  onDeleted={handleDeleted}
                 />
               ))}
             </tbody>
