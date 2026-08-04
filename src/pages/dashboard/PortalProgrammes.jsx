@@ -57,10 +57,13 @@ export default function PortalProgrammes() {
           const busy = pending.has(p.title);
           return (
             <div key={p.title} className="bg-white rounded-xl overflow-hidden shadow-sm">
-              <Photo src={p.image} emoji="🌿" className="h-28" />
+              <Photo src={p.image} emoji={p.emoji} className="h-28" />
               <div className="p-4">
-                <h2 className="font-semibold text-sm text-brwnn-purple-dark">{p.title}</h2>
-                <p className="text-xs text-ink-soft mt-1">{p.text}</p>
+                <h2 className="font-semibold text-sm text-brwnn-purple-dark">
+                  <span className="mr-1" aria-hidden>{p.emoji}</span>
+                  {p.title}
+                </h2>
+                <p className="text-xs font-semibold text-brwnn-pink mt-1">{p.tagline}</p>
                 <button
                   onClick={() => toggleBooking(p.title)}
                   disabled={busy}

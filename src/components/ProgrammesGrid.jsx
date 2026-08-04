@@ -15,12 +15,15 @@ export default function ProgrammesGrid() {
         <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 gap-5 text-left">
           {PROGRAMMES.map((p) => (
             <div key={p.title} className="bg-white rounded-2xl overflow-hidden shadow-sm">
-              <Photo src={p.image} emoji="🌿" className="h-32 sm:h-36" />
+              <Photo src={p.image} emoji={p.emoji} className="h-32 sm:h-36" />
               <div className="p-4">
                 <h3 className="font-heading font-bold text-sm sm:text-base text-brwnn-purple-dark">
+                  <span className="mr-1" aria-hidden>{p.emoji}</span>
                   {p.title}
                 </h3>
-                <p className="mt-1 text-xs sm:text-sm text-ink-soft">{p.text}</p>
+                <p className="mt-1 text-xs sm:text-sm font-semibold text-brwnn-pink">
+                  {p.tagline}
+                </p>
                 <a
                   href="/programmes"
                   className="mt-2 inline-block text-xs sm:text-sm font-bold text-brwnn-pink"
