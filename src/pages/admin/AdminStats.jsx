@@ -21,6 +21,40 @@ function StatTile({ label, value, icon }) {
   );
 }
 
+function LineChart({ points, labels, color = "#4a1e78" }) {
+  const width = 100;
+  const height = 100;
+  const max = Math.max(1, ...points);
+  const stepX = points.length > 1 ? width / (points.length - 1) : 0;
+  const coords = points.map((v, i) => ({
+    x: points.length > 1 ? i * stepX : width / 2,
+    y: height - (v / max) * (height - 16) - 8,
+  }));
+  const path = coords.map((c, i) => `${i === 0 ? "M" : "L"} ${c.x} ${c.y}`).join(" ");
+  const area = `${path} L ${coords[coords.length - 1].x} ${height} L ${coords[0].x} ${height} Z`;
+
+  return (
+    <div>
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-32" preserveAspectRatio="none">
+        <path d={area} fill={color} opacity="0.12" />
+        <path d={path} fill="none" stroke={color} strokeWidth="2" vectorEffect="non-scaling-stroke" />
+        {coords.map((c, i) => (
+          <circle key={i} cx={c.x} cy={c.y} r="2.2" fill={color} vectorEffect="non-scaling-stroke">
+            <title>{`${labels[i]}: ${points[i]}`}</title>
+          </circle>
+        ))}
+      </svg>
+      <div className="flex mt-1">
+        {labels.map((l, i) => (
+          <span key={i} className="flex-1 text-center text-xs text-ink-soft">
+            {l}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function HBar({ label, value, max, color }) {
   const pct = max > 0 ? Math.max((value / max) * 100, value > 0 ? 4 : 0) : 0;
   return (
@@ -73,7 +107,6 @@ export default function AdminStats() {
     byMonth[key] = (byMonth[key] || 0) + 1;
   }
   const months = Object.keys(byMonth).sort().slice(-6);
-  const maxSignups = Math.max(1, ...months.map((m) => byMonth[m]));
 
   const topByPoints = [...profiles]
     .sort((a, b) => (b.reward_points || 0) - (a.reward_points || 0))
@@ -107,21 +140,11 @@ export default function AdminStats() {
           {months.length === 0 ? (
             <p className="text-sm text-ink-soft">No signups yet.</p>
           ) : (
-            <div className="flex gap-3 h-32">
-              {months.map((m) => (
-                <div key={m} className="flex-1 flex flex-col items-center gap-1.5">
-                  <div className="w-full flex-1 flex flex-col justify-end">
-                    <div
-                      className="w-full rounded-t-md bg-brwnn-purple"
-                      style={{ height: `${Math.max((byMonth[m] / maxSignups) * 100, 6)}%` }}
-                      title={`${byMonth[m]} signups`}
-                    />
-                  </div>
-                  <span className="text-xs text-ink-soft">{monthLabel(m)}</span>
-                  <span className="text-xs font-semibold text-brwnn-purple-dark tabular-nums">{byMonth[m]}</span>
-                </div>
-              ))}
-            </div>
+            <LineChart
+              points={months.map((m) => byMonth[m])}
+              labels={months.map(monthLabel)}
+              color="#4a1e78"
+            />
           )}
         </div>
       </div>

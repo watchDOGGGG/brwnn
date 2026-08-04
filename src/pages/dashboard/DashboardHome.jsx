@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { COURSES, SISTERHOOD_ACTIVITY } from "../../config";
 import Photo from "../../components/Photo";
 import ComingSoon from "../../components/ComingSoon";
 import { useAuth } from "../../context/AuthContext";
@@ -31,12 +30,11 @@ export default function DashboardHome() {
     { label: "Reward Points", value: String(user?.rewardPoints ?? 0), icon: "🏆" },
   ];
 
-  const realActivity = posts.map((p) => ({
+  const activity = posts.map((p) => ({
     name: p.author_name,
     text: p.body,
     time: timeAgo(p.created_at),
   }));
-  const activity = [...realActivity, ...SISTERHOOD_ACTIVITY].slice(0, 3);
 
   return (
     <div className="space-y-6">
@@ -107,38 +105,26 @@ export default function DashboardHome() {
 
       <div className="grid sm:grid-cols-[1fr_280px] gap-4">
         <div className="bg-white rounded-xl p-5 shadow-sm">
-          <h2 className="font-bold text-brwnn-purple-dark mb-4">Continue Learning</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {COURSES.map((c) => (
-              <div key={c.title}>
-                <div className="h-16 rounded-lg bg-gradient-to-br from-brwnn-purple/20 to-brwnn-green/20" />
-                <p className="text-xs font-semibold text-brwnn-purple-dark mt-2 leading-tight">
-                  {c.title}
-                </p>
-                <div className="mt-2 h-1.5 rounded-full bg-paper overflow-hidden">
-                  <div
-                    className="h-full bg-brwnn-pink"
-                    style={{ width: `${c.progress}%` }}
-                  />
-                </div>
-                <p className="text-[10px] text-ink-soft mt-1">{c.progress}% Complete</p>
-              </div>
-            ))}
-          </div>
+          <h2 className="font-bold text-brwnn-purple-dark mb-3">Continue Learning</h2>
+          <ComingSoon label="Courses & learning content" />
         </div>
 
         <div className="bg-white rounded-xl p-5 shadow-sm">
           <h2 className="font-bold text-brwnn-purple-dark mb-3">Sisterhood Corner</h2>
-          <div className="space-y-3">
-            {activity.map((a, i) => (
-              <div key={i} className="text-sm">
-                <p className="text-ink-soft">
-                  <span className="font-semibold text-brwnn-purple-dark">{a.name}</span> {a.text}
-                </p>
-                <p className="text-[10px] text-ink-soft/70">{a.time}</p>
-              </div>
-            ))}
-          </div>
+          {activity.length === 0 ? (
+            <p className="text-sm text-ink-soft">No community activity yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {activity.map((a, i) => (
+                <div key={i} className="text-sm">
+                  <p className="text-ink-soft">
+                    <span className="font-semibold text-brwnn-purple-dark">{a.name}</span> {a.text}
+                  </p>
+                  <p className="text-[10px] text-ink-soft/70">{a.time}</p>
+                </div>
+              ))}
+            </div>
+          )}
           <Link to="/dashboard/community" className="mt-4 inline-block text-sm text-brwnn-pink font-semibold">
             Go to Community
           </Link>

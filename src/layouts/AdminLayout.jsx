@@ -17,6 +17,12 @@ export default function AdminLayout() {
                 end
                 className={({ isActive }) => (isActive ? "text-white" : "text-white/60 hover:text-white")}
               >
+                Statistics
+              </NavLink>
+              <NavLink
+                to="/myadmin/users"
+                className={({ isActive }) => (isActive ? "text-white" : "text-white/60 hover:text-white")}
+              >
                 Users
               </NavLink>
               <NavLink
@@ -24,12 +30,6 @@ export default function AdminLayout() {
                 className={({ isActive }) => (isActive ? "text-white" : "text-white/60 hover:text-white")}
               >
                 Events
-              </NavLink>
-              <NavLink
-                to="/myadmin/stats"
-                className={({ isActive }) => (isActive ? "text-white" : "text-white/60 hover:text-white")}
-              >
-                Statistics
               </NavLink>
             </nav>
           </div>

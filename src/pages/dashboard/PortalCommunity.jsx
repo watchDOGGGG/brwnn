@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { SISTERHOOD_ACTIVITY } from "../../config";
 import { useAuth } from "../../context/AuthContext";
 import { fetchPosts, createPost, timeAgo } from "../../lib/dashboardData";
 
@@ -42,7 +41,7 @@ export default function PortalCommunity() {
     text: p.body,
     time: timeAgo(p.created_at),
   }));
-  const feed = tab === "My Groups" ? [] : [...realFeed, ...SISTERHOOD_ACTIVITY];
+  const feed = tab === "My Groups" ? [] : realFeed;
 
   return (
     <div className="space-y-6">

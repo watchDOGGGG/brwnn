@@ -26,7 +26,7 @@ export const PROGRAMMES = [
   },
   {
     emoji: "💃",
-    title: "Afroletics Dance Therapy",
+    title: "Afrolistics Dance Therapy",
     tagline: "Move Your Body. Lift Your Spirit.",
     text: "Experience the joy of Afro-inspired dance fitness designed to energise your body, reduce stress and boost confidence. No experience required—just bring your smile and let the rhythm do the healing.",
     image: "/images/programme-dance.jpg",
@@ -54,18 +54,6 @@ export const PROGRAMMES = [
   },
 ];
 
-export const COURSES = [
-  { title: "Self-Love & Boundaries Course", progress: 60 },
-  { title: "Stress Less, Thrive More Course", progress: 33 },
-  { title: "Mindful Living Course", progress: 75 },
-  { title: "Nutrition & Wellbeing Course", progress: 20 },
-];
-
-export const SISTERHOOD_ACTIVITY = [
-  { name: "Ama Johnson", text: "posted in General Chat", time: "2 hours ago" },
-  { name: "BRWNN Team", text: "New event photos added in Nature Walks", time: "5 hours ago" },
-  { name: "Reminder", text: "Afroletics class tomorrow at 11AM", time: "1 day ago" },
-];
 
 export const MEMBER_BENEFITS = [
   "Member-only events & retreats",
@@ -83,7 +71,7 @@ export const EVENTS = [
     image: "/images/event-walk.jpg",
   },
   {
-    title: "Afroletics Dance Therapy",
+    title: "Afrolistics Dance Therapy",
     location: "Alloa Town Hall",
     date: "Sunday",
     time: "11:00 AM",

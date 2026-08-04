@@ -77,9 +77,9 @@ export default function App() {
           </AdminRoute>
         }
       >
-        <Route index element={<AdminUsers />} />
+        <Route index element={<AdminStats />} />
+        <Route path="users" element={<AdminUsers />} />
         <Route path="events" element={<AdminEvents />} />
-        <Route path="stats" element={<AdminStats />} />
       </Route>
     </Routes>
   );
